@@ -1,0 +1,81 @@
+@using MudBlazor
+@using BlazorSerial.Services
+@inject SerialPortService SerialPorts
+<MudTabs @bind-ActivePanelIndex="_index" Border="true" Outlined="true" PanelClass="px-4 py-6" ApplyEffectsToContainer="true">
+	<ChildContent>
+		@foreach (var item in _tabs)
+		{
+			 <MudTabPanel Text="@item.Text" Tag="@item.TabGuid">@item.Body</MudTabPanel>
+		}
+	</ChildContent>
+	<Header>
+		<MudButtonGroup>
+			<MudTooltip Text="Prepend a tab">
+				<MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="@( () => AddTabCallback(false) )" />
+			</MudTooltip>
+			<MudTooltip Text="Append a tab">
+				<MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="@( () => AddTabCallback(true) )"  />
+			</MudTooltip>
+		</MudButtonGroup>
+	</Header>
+	<TabPanelHeader>
+		@if(context.Text.StartsWith("Tab") == false)
+		{
+			<MudTooltip Text="only dynamic tabs can be closed">
+				<MudIconButton Class="ml-2 pa-1" Color="Color.Error" Icon="@Icons.Material.Filled.Remove" OnClick="(_) => RemoveTab(context)" />
+			</MudTooltip>
+		}
+  </TabPanelHeader>
+</MudTabs>
+
+@code {
+
+	private List<TabPage> _tabs = new();
+	private int _index = 0;
+	private int? _nextIndex = null;
+
+	private void RemoveTab(MudTabPanel tabPanel)
+	{
+		var tab = _tabs.FirstOrDefault(x => x.TabGuid == (Guid)tabPanel.Tag);
+		if(tab != null)
+		{
+			_tabs.Remove(tab);
+		}
+	}
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+		foreach (var serialPort in SerialPorts.GetSerialPorts())
+		{
+			_tabs.Add(new TabPage() {SerialPort = serialPort});
+		}
+	}
+
+	private void AddTabCallback(Boolean append)
+	{
+		var tabView = new TabPage() { SerialPort = new SerialPort() {DisplayName = "New Port"}};
+		
+		//the tab becomes available after it is rendered. Hence, we can't set the index here
+		if(append)
+		{
+			_tabs.Add(tabView);
+			_nextIndex = _tabs.Count - 1;
+		}
+		else
+		{
+			_tabs.Insert(0, tabView);
+			_nextIndex = 0;
+		}
+	}
+
+	protected override void OnAfterRender(bool firstRender)
+	{
+		if(_nextIndex.HasValue)
+		{
+			_index = _nextIndex.Value;
+			_nextIndex = null;
+			StateHasChanged();
+		}
+	}
+}
