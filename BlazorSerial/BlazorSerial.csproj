@@ -6,4 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="MudBlazor" Version="6.1.9" />
+      <PackageReference Include="Radzen.Blazor" Version="4.7.6" />
+      <PackageReference Include="SerialPortStream" Version="2.4.1" />
+    </ItemGroup>
+
 </Project>

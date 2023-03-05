@@ -1,9 +1,20 @@
 ﻿@page "/"
+@using BlazorSerial.Services
+@inject SerialPortService SpService;
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Blazor Serial</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+@if (!SpService.GetSerialPorts().Any())
+{
+    <p1>Loading serial ports, please wait...</p1>
+}
+else 
+{
+    @* <TabControl> *@
+    @*     @foreach (var sp in SpService.GetSerialPorts()) *@
+    @*     { *@
+    @*         <TabPage SerialPort=@sp/> *@
+    @*     } *@
+    @* </TabControl> *@
+    <SerialTabs/>
+}

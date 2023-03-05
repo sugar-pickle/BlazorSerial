@@ -1,5 +1,100 @@
-<h3>TabPage</h3>
+@using BlazorSerial.Services
+@inject CommandService CommandService
+@inject IDialogService DialogService
+@inherits LayoutComponentBase
+
+<MudPaper Height="100%" Style="overflow:hidden; position:relative;">
+    <MudDrawerContainer Class="mud-height-full">
+        <MudDrawer @bind-Open="@SerialPort.DrawerOpen" Elevation="0" Variant="@DrawerVariant.Persistent" Color="Color.Primary">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h6">@SerialPort.DisplayName</MudText>
+            </MudDrawerHeader>
+            <MudNavMenu>
+                @foreach (var command in CommandService.GetCommands())
+                {
+                    <MudNavLink OnClick="() => SendCommand(command.CommandString)">@command.Name</MudNavLink>
+                }
+                <!--
+                //TODO implement command tree
+            <MudNavGroup Title="Settings" Expanded="true">
+                <MudNavLink Href="/users">Users</MudNavLink>
+                <MudNavLink Href="/security">Security</MudNavLink>
+            </MudNavGroup>
+            <MudNavLink Href="/about">About</MudNavLink>
+            -->
+            </MudNavMenu>
+        </MudDrawer>
+        <MudToolBar>
+            <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Class="mr-5" OnClick="@ToggleDrawer"/>
+            @if (SerialPort.Running)
+            {
+                <MudIconButton Icon="@Icons.Material.Outlined.Stop" OnClick="Stop" />
+            }
+            else
+            {
+                <MudIconButton Icon="@Icons.Material.Outlined.PlayArrow" OnClick="Start" />
+            }
+            <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="EditPort" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Settings" OnClick="OpenSettings" Color="Color.Inherit" />
+        </MudToolBar>
+        <div class="d-flex flex-column mud-height-full console">
+            <div class="console-inner">
+                <div id="outputs">
+                    @foreach (var line in SerialPort.GetBuffer())
+                    {
+                        <div class="output-cmd">@line</div>
+                    }
+                </div>
+                <RadzenTextBox @bind-Value="@CommandToSend" Placeholder="Enter a command..." Change="@(OnChange)" Class="console-input" />
+            </div>
+        </div>
+    </MudDrawerContainer>
+</MudPaper>
 
 @code {
+    [Parameter]
+    public SerialPort SerialPort { get; init; } = null!;
+    [Parameter]
+    public Action UpdateParent { get; init; } = null!;
+
+    private string? CommandToSend { get; set; }
+
+    void ToggleDrawer() => SerialPort.DrawerOpen = !SerialPort.DrawerOpen;
+
+    async Task SendCommand(string commandString)
+    {
+        Console.WriteLine($"{SerialPort.DisplayName} sending command {commandString}");
+        await SerialPort.Write(commandString);
+    }
     
+    private async Task OnChange(string args)
+    {
+        await SendCommand(args);
+        CommandToSend = null;
+    }
+
+    private void EditPort()
+    {
+        var parameters = new DialogParameters
+        {
+            {
+                "SerialPort", SerialPort
+            }
+        };
+        DialogService.Show<Edit>($"Edit {SerialPort.DisplayName}", parameters);
+        StateHasChanged();
+    }
+
+    private void OpenSettings()
+    {
+        DialogService.Show<Settings>("Settings");
+    }
+    private void Start()
+    {
+        SerialPort.Start();
+    }
+    private async Task Stop()
+    {
+        await SerialPort.Stop();
+    }
 }

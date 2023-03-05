@@ -1,5 +1,24 @@
-<h3>Edit</h3>
-
+@using BlazorSerial.Services
+@using Variant = MudBlazor.Variant
+@using TaskExtensions = System.Threading.Tasks.TaskExtensions
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="SerialPort.DisplayName" Label="Display Name" Variant="Variant.Text"></MudTextField>
+        <MudTextField @bind-Value="SerialPort.PortName" Label="Serial Port" Variant="Variant.Text"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
 @code {
-    
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public SerialPort SerialPort { get; set; }
+
+    async Task Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+        await SerialPort.Stop();
+    }
+    void Cancel() => MudDialog.Cancel();
 }
